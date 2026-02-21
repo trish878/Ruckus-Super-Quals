@@ -52,7 +52,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 @Config
-public final class MecanumDrive {
+public final class MD {
     public static class Params {
         // IMU orientation
         // TODO: fill in these values based on
@@ -68,7 +68,7 @@ public final class MecanumDrive {
         public double trackWidthTicks = 5221.489048360898;
 
         // feedforward parameters (in tick units)
-        public double kS = 1.908663828521735;
+        public double kS = 1.2582360675167843;
         public double kV = 0.00022919996393678982;
         public double kA = 0.00004;
 
@@ -130,10 +130,10 @@ public final class MecanumDrive {
         private Pose2d pose;
 
         public DriveLocalizer(Pose2d pose) {
-            leftFront = new OverflowEncoder(new RawEncoder(MecanumDrive.this.leftFront));
-            leftBack = new OverflowEncoder(new RawEncoder(MecanumDrive.this.leftBack));
-            rightBack = new OverflowEncoder(new RawEncoder(MecanumDrive.this.rightBack));
-            rightFront = new OverflowEncoder(new RawEncoder(MecanumDrive.this.rightFront));
+            leftFront = new OverflowEncoder(new RawEncoder(MD.this.leftFront));
+            leftBack = new OverflowEncoder(new RawEncoder(MD.this.leftBack));
+            rightBack = new OverflowEncoder(new RawEncoder(MD.this.rightBack));
+            rightFront = new OverflowEncoder(new RawEncoder(MD.this.rightFront));
 
             imu = lazyImu.get();
 
@@ -219,7 +219,7 @@ public final class MecanumDrive {
         }
     }
 
-    public MecanumDrive(HardwareMap hardwareMap, Pose2d pose) {
+    public MD(HardwareMap hardwareMap, Pose2d pose) {
         LynxFirmware.throwIfModulesAreOutdated(hardwareMap);
 
         for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {

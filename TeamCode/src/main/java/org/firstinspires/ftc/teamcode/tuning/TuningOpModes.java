@@ -40,6 +40,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 import org.firstinspires.ftc.robotcore.external.navigation.UnnormalizedAngleUnit;
 import org.firstinspires.ftc.robotcore.internal.opmode.OpModeMeta;
+import org.firstinspires.ftc.teamcode.MCD;
 import org.firstinspires.ftc.teamcode.MecanumDrive;
 import org.firstinspires.ftc.teamcode.OTOSLocalizer;
 import org.firstinspires.ftc.teamcode.PinpointLocalizer;
@@ -53,7 +54,7 @@ import java.util.List;
 
 public final class TuningOpModes {
     // TODO: change this to TankDrive.class if you're using tank
-    public static final Class<?> DRIVE_CLASS = MecanumDrive.class;
+    public static final Class<?> DRIVE_CLASS = MecanumDrive.class; //CHANGE BACK TO MECANUM
 
     public static final String GROUP = "quickstart";
     public static final boolean DISABLED = false;
