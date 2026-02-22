@@ -12,6 +12,7 @@ import java.util.List;
 public class AutoShooter {
     HardwareMap hardwareMap;
     CRServo f,two;
+    public static DcMotorEx top, bottom;
     int alliance =5;
     private static Limelight3A limelight;
 
@@ -27,6 +28,9 @@ public class AutoShooter {
         this.hardwareMap = hardwareMap;
         f = hardwareMap.get(CRServo.class, "f");
         two = hardwareMap.get(CRServo.class, "two");
+        bottom = hardwareMap.get(DcMotorEx.class, "bottom");
+        bottom.setDirection(DcMotorEx.Direction.REVERSE);
+        top = hardwareMap.get(DcMotorEx.class, "top");
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
         limelight.pipelineSwitch(0);
         limelight.start();
