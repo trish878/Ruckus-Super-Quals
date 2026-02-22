@@ -16,16 +16,18 @@ public class LightTest extends LinearOpMode {
     int tolerance = 100;
     @Override
     public void runOpMode() throws InterruptedException {
-        hoodLight = hardwareMap.get(RevBlinkinLedDriver.class, "hoodLight");
-        hoodLight.setPattern(RevBlinkinLedDriver.BlinkinPattern.RED);
-        double targetVelocity = AutoShooter.bottom.getVelocity();
-        if(targetVelocity > velocity-tolerance){//this assumes that the measurement of velocity stays the same from before you started doing everything
-            hoodLight.setPattern(RevBlinkinLedDriver.BlinkinPattern.GREEN);//In addition, we must tune tolerance.
-        }else{
+        waitForStart();
+        while(opModeIsActive()) {
+            hoodLight = hardwareMap.get(RevBlinkinLedDriver.class, "hoodLight");
             hoodLight.setPattern(RevBlinkinLedDriver.BlinkinPattern.RED);
+            double targetVelocity = AutoShooter.bottom.getVelocity();
+            if (targetVelocity > velocity - tolerance) {//this assumes that the measurement of velocity stays the same from before you started doing everything
+                hoodLight.setPattern(RevBlinkinLedDriver.BlinkinPattern.GREEN);//In addition, we must tune tolerance.
+            } else {
+                hoodLight.setPattern(RevBlinkinLedDriver.BlinkinPattern.RED);
+            }
+
         }
-
-
     }
 }
 //MB TRIH
