@@ -29,7 +29,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 @TeleOp(name = "RuckusTele2")
 @Config
 public class RuckusTele extends LinearOpMode {
-    DcMotorEx FL,FR, BR, BL, in1, in2, bottom,top;
+    public static DcMotorEx FL,FR, BR, BL, in1, in2, bottom,top;
     public static double D=10; //+0.1
 
     public static double P = 150; //+1

@@ -7,26 +7,29 @@ import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.Servo;
 
 @TeleOp(name = "Light Test")
 @Config
 public class LightTest extends LinearOpMode {
-    RevBlinkinLedDriver hoodLight;
-    AutoShooter autoShooter = new AutoShooter(hardwareMap);
-    int tolerance = 100;
+    Servo hoodLight;
+    //AutoShooter autoShooter = new AutoShooter(hardwareMap);
+    int tolerance = 20;
+    public static double pos;
     @Override
     public void runOpMode() throws InterruptedException {
+        hoodLight = hardwareMap.get(Servo.class, "hoodLight");
+        //hoodLight.setPattern(RevBlinkinLedDriver.BlinkinPattern.RED); //Ryder you fucking idiot piece of shit
         waitForStart();
-        while(opModeIsActive()) {
-            hoodLight = hardwareMap.get(RevBlinkinLedDriver.class, "hoodLight");
-            hoodLight.setPattern(RevBlinkinLedDriver.BlinkinPattern.RED);
-            double targetVelocity = AutoShooter.bottom.getVelocity();
-            if (targetVelocity > velocity - tolerance) {//this assumes that the measurement of velocity stays the same from before you started doing everything
-                hoodLight.setPattern(RevBlinkinLedDriver.BlinkinPattern.GREEN);//In addition, we must tune tolerance.
+        while (opModeIsActive()) {
+            hoodLight.setPosition(0.277);
+            double targetVelocity = RuckusTele.bottom.getVelocity();
+            if (velocity > targetVelocity + tolerance) {
+                hoodLight.setPosition(0.5);
+                telemetry.addData("velocity",velocity);
             } else {
-                hoodLight.setPattern(RevBlinkinLedDriver.BlinkinPattern.RED);
+                hoodLight.setPosition(0.277);
             }
-
         }
     }
 }
