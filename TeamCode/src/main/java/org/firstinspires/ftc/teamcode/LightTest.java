@@ -23,8 +23,8 @@ public class LightTest extends LinearOpMode {
         waitForStart();
         while (opModeIsActive()) {
             hoodLight.setPosition(0.277);
-            double targetVelocity = RuckusTele.bottom.getVelocity();
-            if (velocity > targetVelocity + tolerance) {
+            double Velocity = RuckusTele.bottom.getVelocity();
+            if (velocity > Velocity + tolerance) {
                 hoodLight.setPosition(0.5);
                 telemetry.addData("velocity",velocity);
             } else {
