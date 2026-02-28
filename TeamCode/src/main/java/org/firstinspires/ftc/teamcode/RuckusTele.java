@@ -43,7 +43,7 @@ public class RuckusTele extends LinearOpMode {
 
     CRServo right, left, f, zero, one, two;
 
-    Servo gate, hood;
+    Servo gate, hood, hoodLight;
 
 
 
@@ -51,6 +51,7 @@ public class RuckusTele extends LinearOpMode {
 
     public static double hoodpos;
     double F = 32767.0 / 2340;
+    int tolerance = 20;
 
     OverflowEncoder par0, par1, perp;
 
@@ -75,6 +76,7 @@ public class RuckusTele extends LinearOpMode {
         BR = hardwareMap.get(DcMotorEx.class, "BR"); //CONTROL HUB
         BR.setDirection(DcMotorSimple.Direction.FORWARD);
         BR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        hoodLight = hardwareMap.get(Servo.class, "hoodLight");
 
 
         imu = hardwareMap.get(IMU.class, "imu");
@@ -130,10 +132,20 @@ public class RuckusTele extends LinearOpMode {
 
 
         waitForStart();
+        hoodLight.setPosition(0.3);
+
 
         imu.resetYaw();
 
         while (opModeIsActive()) {
+            double Velocity = RuckusTele.bottom.getVelocity();
+            if (velocity > Velocity + tolerance) {
+                hoodLight.setPosition(0.3);
+                telemetry.addData("velocity",velocity);
+            } else {
+                hoodLight.setPosition(0.5);
+            }
+
             //imu.getRobotYawPitchRollAngles();
             /*telemetry.addData("yaw", imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
             telemetry.addData("pitch", imu.getRobotYawPitchRollAngles().getPitch());
