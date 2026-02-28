@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+
 import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
@@ -58,19 +59,19 @@ public final class MecanumDrive {
         // TODO: fill in these values based on
         //   see https://ftc-docs.firstinspires.org/en/latest/programming_resources/imu/imu.html?highlight=imu#physical-hub-mounting
         public RevHubOrientationOnRobot.LogoFacingDirection logoFacingDirection =
-                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT;
+                RevHubOrientationOnRobot.LogoFacingDirection.BACKWARD;
         public RevHubOrientationOnRobot.UsbFacingDirection usbFacingDirection =
-                RevHubOrientationOnRobot.UsbFacingDirection.UP;
+                RevHubOrientationOnRobot.UsbFacingDirection.DOWN;
 
         // drive model parameters
-        public double inPerTick = 0.002006359300477;
-        public double lateralInPerTick = 0.0013119397480826423;
-        public double trackWidthTicks = 5642.396427489008;
+        public double inPerTick = 0.002003080196; //0.002006359300477;
+        public double lateralInPerTick = 0.0013727997777332576;
+        public double trackWidthTicks =  5138.708923222602;//5043.878300290048;//5374.271335628376;//5841.85491384334;
 
         // feedforward parameters (in tick units)
-        public double kS = 1.2582360675167843;
-        public double kV = 0.00022919996393678982;
-        public double kA = 0.00004;
+        public double kS = 1.7546636884010858;//1.2582360675167843;
+        public double kV = 0.0002487602923926359;//0.00022919996393678982;
+        public double kA = 0.000055;
 
         // path profile parameters (in inches)
         public double maxWheelVel = 72;
@@ -82,9 +83,9 @@ public final class MecanumDrive {
         public double maxAngAccel = Math.PI;
 
         // path controller gains
-        public double axialGain = 0;
-        public double lateralGain = 0;
-        public double headingGain = 0; // shared with turn
+        public double axialGain = 5;
+        public double lateralGain = 6;
+        public double headingGain = 5; // shared with turn
 
         public double axialVelGain = 0.0;
         public double lateralVelGain = 0.0;

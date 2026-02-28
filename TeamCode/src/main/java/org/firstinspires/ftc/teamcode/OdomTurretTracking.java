@@ -13,7 +13,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.MecanumDrive;
 
-@TeleOp(name = "Odom Turret Tracking")
+@TeleOp(name = "Voltage Test")
 @Config
 public class OdomTurretTracking extends LinearOpMode {
     public static double kP = 1.5;
@@ -47,11 +47,12 @@ public class OdomTurretTracking extends LinearOpMode {
 
 
     public boolean track = true;
+    public static double power;
 
     @Override
     public void runOpMode() throws InterruptedException {
 
-        MecanumDrive drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
+        MCD drive = new MCD(hardwareMap, new Pose2d(0, 0, 0));
         //AutoShooter autoShooter = new AutoShooter(hardwareMap);
         two = hardwareMap.get(CRServo.class, "two");
         f = hardwareMap.get(CRServo.class, "f");
@@ -60,6 +61,7 @@ public class OdomTurretTracking extends LinearOpMode {
 
         FtcDashboard dashboard = FtcDashboard.getInstance();
         telemetry = dashboard.getTelemetry();
+
         double prev_voltage = 0;
         double voltage = 0;
 
@@ -70,11 +72,11 @@ public class OdomTurretTracking extends LinearOpMode {
 
         while (opModeIsActive()) {
 
-            /*prev_voltage = analog_right.getVoltage();
+            prev_voltage = analog_right.getVoltage();
             telemetry.addData("voltage", prev_voltage);
-            telemetry.addData("voltage");
+            telemetry.update();
             two.setPower(power);
-            f.setPower(power);*/
+            f.setPower(power);
         }
     }
 

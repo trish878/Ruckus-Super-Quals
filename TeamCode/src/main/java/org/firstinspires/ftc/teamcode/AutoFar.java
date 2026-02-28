@@ -1,109 +1,19 @@
 package org.firstinspires.ftc.teamcode;
 
-import androidx.annotation.NonNull;
-
-import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.PIDFCoefficients;
-import com.qualcomm.robotcore.hardware.Servo;
-
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 @Autonomous(name = "Auto")
 @Config
-public class AutoClose extends LinearOpMode {
+public class AutoFar extends LinearOpMode {
 
     public enum Alliance { RED, BLUE }
     public Alliance alliance = Alliance.RED;
-
-    public static double D=10; //+0.1
-
-    public static double P = 150;
-    double F = 32767.0 / 2340;
-
-    public class Stuff{
-        private DcMotorEx in1, in2, top, bottom;
-        private Servo gate, hood;
-
-
-
-        public Stuff(HardwareMap hardwareMap) {
-            in1 = hardwareMap.get(DcMotorEx.class, "in1");
-            in2 = hardwareMap.get(DcMotorEx.class, "in2");
-            bottom = hardwareMap.get(DcMotorEx.class, "bottom");
-            bottom.setDirection(DcMotorEx.Direction.REVERSE);
-
-            top = hardwareMap.get(DcMotorEx.class, "top");
-            top.setDirection(DcMotorEx.Direction.FORWARD);
-            PIDFCoefficients pidf = new PIDFCoefficients(P, 0, D, F);
-
-
-            bottom.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidf);
-            top.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidf);
-            gate = hardwareMap.get(Servo.class, "gate");
-            hood = hardwareMap.get(Servo.class, "hood");
-        }
-
-        public class In implements Action {
-            @Override
-            public boolean run(@NonNull TelemetryPacket packet) {
-                in1.setPower(1);
-                in2.setPower(1);
-                return true;
-            }
-
-        }
-
-        public Action in() {return new In();}
-
-
-        public class Out implements Action {
-            @Override
-            public boolean run(@NonNull TelemetryPacket packet) {
-                in1.setPower(-0.7);
-                in2.setPower(-0.7);
-                top.setVelocity(-1000);
-                bottom.setVelocity(-1000);
-                return true;
-
-            }
-        }
-        public Action out() {return new Out();}
-
-        public class CloseGate implements Action {
-            @Override
-            public boolean run(@NonNull TelemetryPacket packet) {
-                gate.setPosition(0.7);
-                return true;
-            }
-        }
-
-        public Action closeGate() {return new CloseGate();}
-
-        public class OpenGate implements Action {
-            @Override
-            public boolean run(@NonNull TelemetryPacket packet) {
-                gate.setPosition(0.4);
-                return true;
-            }
-        }
-        public Action openGate() {return new OpenGate();}
-
-
-
-    }
 
     @Override
     public void runOpMode() {
@@ -132,10 +42,6 @@ public class AutoClose extends LinearOpMode {
 
         MecanumDrive drive = new MecanumDrive(hardwareMap, initialPose);
 
-        FtcDashboard dashboard = FtcDashboard.getInstance();
-        Telemetry dashboardTelemetry = dashboard.getTelemetry();
-        telemetry = new MultipleTelemetry(telemetry, dashboardTelemetry);
-
         waitForStart();
 
         /* =======================
@@ -150,6 +56,9 @@ public class AutoClose extends LinearOpMode {
                 .splineToSplineHeading(new Pose2d(12, side*33, side*Math.toRadians(90)), side*Math.toRadians(90))
                 .lineToY(side*52);
 
+        /* =======================
+           SECOND ROW INTAKE
+           ======================= */
         TrajectoryActionBuilder intake2 = outtake1.endTrajectory().fresh()
                 .lineToY(side*35)
                 .splineToSplineHeading(new Pose2d(-20, side*20, side*Math.toRadians(0)), side*Math.toRadians(200));

@@ -3,276 +3,223 @@ package org.firstinspires.ftc.teamcode;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.PoseVelocity2d;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.OverflowEncoder;
 import com.acmerobotics.roadrunner.ftc.RawEncoder;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.AnalogInput;
-import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Gamepad;
-import com.qualcomm.robotcore.hardware.IMU;
-import com.qualcomm.robotcore.hardware.PIDFCoefficients;
-import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.*;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
-import org.firstinspires.ftc.robotcore.external.navigation.*;
-import org.firstinspires.ftc.robotcore.external.Telemetry;
-
-
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
-@TeleOp(name = "RuckusTele2")
+@TeleOp(name = "RuckusTele")
+
 @Config
 public class RuckusTele extends LinearOpMode {
-    DcMotorEx FL,FR, BR, BL, in1, in2, bottom,top;
-    public static double D=10; //+0.1
 
-    public static double P = 150; //+1
+    // ================= HARDWARE =================
+
 
     public static double velocity;
-    public static double intake, intake1;
-
-    public static double minPower, gatepos;
-
-    public static double power;
-
-    CRServo right, left, f, zero, one, two;
-
-    Servo gate, hood;
-
-
-
-    double voltage;
-
+    public static double gate_pos;
     public static double hoodpos;
-    double F = 32767.0 / 2340;
 
     OverflowEncoder par0, par1, perp;
 
-    AnalogInput analog_right,analog_left;
-    public static double pow_r, pow_l;
-    IMU  imu;
 
-    double distance;
-    ElapsedTime runtime = new ElapsedTime();
+
+
+    // ================= TURRET PID =================
+    public static double kP_turret = -0.005;
+    public static double kF_turret = -0.009;
+    public static double kI_turret = 0.0;
+    public static double kD_turret = -0.002;
+
+    double turretIntegral = 0;
+    double turretLastError = 0;
+
+    ElapsedTime turretTimer = new ElapsedTime();
+
+    // Deadband to prevent jitter
+    public static double tyDeadband = 0.3;
+
+    // ================= OTHER =================
+    double voltage;
+
     @Override
     public void runOpMode() throws InterruptedException {
-        //HARDWARE
-        FL = hardwareMap.get(DcMotorEx.class, "FL"); //CONTROL HUB
-        FL.setDirection(DcMotorSimple.Direction.REVERSE);
-        FL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        FR = hardwareMap.get(DcMotorEx.class, "FR");//CONTROL HUB
-        FR.setDirection(DcMotorSimple.Direction.FORWARD);
-        FR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        BL = hardwareMap.get(DcMotorEx.class, "BL"); //CONTROL HUB
-        BL.setDirection(DcMotorSimple.Direction.REVERSE);
-        BL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        BR = hardwareMap.get(DcMotorEx.class, "BR"); //CONTROL HUB
-        BR.setDirection(DcMotorSimple.Direction.FORWARD);
-        BR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        Hardware hardware = new Hardware(hardwareMap);
+        MecanumDrive drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
 
-
-        imu = hardwareMap.get(IMU.class, "imu");
-
-        RevHubOrientationOnRobot orientationOnRobot = new RevHubOrientationOnRobot(
-                RevHubOrientationOnRobot.LogoFacingDirection.BACKWARD,
-                RevHubOrientationOnRobot.UsbFacingDirection.DOWN
+        telemetry = new MultipleTelemetry(
+                telemetry,
+                FtcDashboard.getInstance().getTelemetry()
         );
-
-        imu.initialize(new IMU.Parameters(orientationOnRobot));
-
-        two = hardwareMap.get(CRServo.class, "two");
-        f = hardwareMap.get(CRServo.class, "f");
-
-        analog_right = hardwareMap.get(AnalogInput.class, "servopos");
-        gate = hardwareMap.get(Servo.class, "gate");
-        hood = hardwareMap.get(Servo.class, "hood");
-
-
-
-
-        in1 = hardwareMap.get(DcMotorEx.class, "in1");
-        in1.setDirection(DcMotorEx.Direction.FORWARD);
-        in2= hardwareMap.get(DcMotorEx.class, "in2");
-        in2.setDirection(DcMotorEx.Direction.REVERSE);
-        bottom = hardwareMap.get(DcMotorEx.class, "bottom");
-        bottom.setDirection(DcMotorEx.Direction.REVERSE);
-
-        top = hardwareMap.get(DcMotorEx.class, "top");
-        top.setDirection(DcMotorEx.Direction.FORWARD);
-        PIDFCoefficients pidf = new PIDFCoefficients(P, 0, D, F);
-
-        FtcDashboard dashboard = FtcDashboard.getInstance();
-        Telemetry dashboardTelemetry = dashboard.getTelemetry();
-        telemetry = new MultipleTelemetry(telemetry, dashboardTelemetry);
-
-        bottom.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidf);
-        top.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidf);
-
-
-
-        //CURRENT AND PREVIOUS GAMEPAD OBJECTS
-        Gamepad currentGamepad1 = new Gamepad();
-        Gamepad prevGamepad1 = new Gamepad();
-        par0 = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "FR")));
-        par1 = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "BL")));
-        perp = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "FL")));
-
-        par0.setDirection(DcMotorSimple.Direction.REVERSE);//left is positive
-        perp.setDirection(DcMotorSimple.Direction.REVERSE);
 
         AutoShooter autoShooter = new AutoShooter(hardwareMap);
 
+        par0 = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "FL")));
+        par1 = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "BR")));
+        perp = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "FR")));
+
+        //par0.setDirection(DcMotorSimple.Direction.REVERSE);
 
         waitForStart();
+        turretTimer.reset();
 
-        imu.resetYaw();
+        Gamepad currentGamepad1 = new Gamepad();
+        Gamepad currentGamepad2 = new Gamepad();
+        Gamepad prevGamepad1 = new Gamepad();
+        Gamepad prevGamepad2 = new Gamepad();
 
+        // ================= MAIN LOOP =================
         while (opModeIsActive()) {
-            //imu.getRobotYawPitchRollAngles();
-            /*telemetry.addData("yaw", imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
-            telemetry.addData("pitch", imu.getRobotYawPitchRollAngles().getPitch());
-            telemetry.addData("roll", imu.getRobotYawPitchRollAngles().getRoll());
+
+
+            PoseVelocity2d vel = drive.updatePoseEstimate();
+            Pose2d pose = drive.localizer.getPose();
+
+
+
+            double dx = pose.position.x;
+            double dy = pose.position.y;
+            double heading = pose.heading.toDouble();
+
+            telemetry.addData("x", dx);
+            telemetry.addData("y", dy);
+            telemetry.addData("heading", heading);
+            telemetry.addData("topv", hardware.top.getVelocity());
+            telemetry.addData("bottomv", hardware.bottom.getVelocity());
+
             telemetry.addData("par0", par0.getPositionAndVelocity().position);
             telemetry.addData("par1", par1.getPositionAndVelocity().position);
-            telemetry.addData("perp", perp.getPositionAndVelocity().position);*/
-
-            telemetry.addData("vbottom", bottom.getVelocity());
-            telemetry.addData("top", top.getVelocity());
-
-            /*two.setPower(pow_r);
-            f.setPower(pow_l);
-            voltage = analog_right.getVoltage();
-            telemetry.addData("pos", ((voltage*360)/3.3));
-            telemetry.update();
+            telemetry.addData("perp", perp.getPositionAndVelocity().position);
 
 
-            top.setVelocity(velocity);
-            bottom.setVelocity(velocity);
+            /*if (gamepad1.options) {
+                drive.pose = new Pose2d(0, 0, 0); // Resets the "Ghost" robot to zero
+            }*/
 
-            telemetry.addData("vtop", top.getVelocity());
-            telemetry.addData("vbottom", bottom.getVelocity());*/
 
-            double tx = autoShooter.gettx();
+
+
+
+            // ================= DRIVE =================
+            double x = gamepad1.left_stick_x;
+            double y = -gamepad1.left_stick_y;
+            double r = 0.8 * gamepad1.right_stick_x;
+
+            drive.setDrivePowers(new PoseVelocity2d(
+                    new Vector2d(y, -x),
+                    -r
+            ));
+
+// IMPORTANT: You must call update() to refresh the localizer
+
+
+            hardware.FL.setPower(y + x + r);
+            hardware.FR.setPower(y - x - r);
+            hardware.BL.setPower(y - x + r);
+            hardware.BR.setPower(y + x - r);
+
+            // ================= HOOD =================
+            hardware.hood.setPosition(hoodpos);
+
+            // ================= LIMELIGHT =================
             double ty = autoShooter.getty();
-            telemetry.addData("Tx", tx);
-            telemetry.addData("Ty", ty);
+            double tx = autoShooter.gettx();
+            double ta = autoShooter.getta();
+            double distance = AutoShooter.getDistanceFromLimelightToGoal();
 
-            voltage = analog_right.getVoltage();
-            telemetry.addData("pos", voltage);
+            telemetry.addData("distance", distance);
 
+            telemetry.addData("ty", ty);
+            telemetry.addData("tx", tx);
+            telemetry.addData("ta", ta);
 
-
-             f.setPower(power);
-             two.setPower(power);
-
-
-
-
-
-            telemetry.addData("power", power);
-            //telemetry.addData("Tx", tx);
-            telemetry.addData("power", power);
-
-
-           telemetry.addData("tx", autoShooter.getty());
+            //x
+            //y
+            //distance = Math.sqrt(x^2 + y^2)
 
 
 
+            /*if(hardware.top.getVelocity()>velocity-20 && hardware.top.getVelocity()<velocity+20 && hardware.bottom.getVelocity()>velocity-20 && hardware.bottom.getVelocity()<velocity+20) {
+                hardware.hoodLight.setPosition(0.5);
+            }*/
 
-            distance = AutoShooter.getDistanceFromLimelightToGoal();
+            // ================= TURRET PID =================
+            if (!Double.isNaN(ty)) {
 
+                double error = ty;   // target = 0
+                double dt = turretTimer.seconds();
+                turretTimer.reset();
 
-            if (autoShooter.isTracking()) {
-                gamepad1.rumble(Gamepad.RUMBLE_DURATION_CONTINUOUS);
-                gamepad2.rumble(Gamepad.RUMBLE_DURATION_CONTINUOUS);
-                telemetry.addData("Distance", AutoShooter.getDistanceFromLimelightToGoal());
+                if (Math.abs(error) < tyDeadband) {
+                    turretIntegral = 0;
+                    hardware.f.setPower(0);
+                    hardware.two.setPower(0);
+                } else {
+                    turretIntegral += error * dt;
+                    turretIntegral = Math.max(-1, Math.min(1, turretIntegral));
 
+                    double derivative = (error - turretLastError) / dt;
+                    turretLastError = error;
+
+                    double output =
+                            kP_turret * error +
+                                    kI_turret * turretIntegral +
+                                    kD_turret * derivative + kF_turret * vel.angVel;
+
+                    output = Math.max(-1, Math.min(1, output));
+
+                    hardware.f.setPower(output);
+                    hardware.two.setPower(output);
+                }
+
+            } else {
+                turretIntegral = 0;
+                turretLastError = 0;
+                hardware.f.setPower(0);
+                hardware.two.setPower(0);
             }
+
+            // ================= INTAKE / GATE =================
+            if (gamepad1.left_bumper) {
+                hardware.gate.setPosition(0.7);
+                hardware.in1.setPower(1);
+                hardware.in2.setPower(1);
+            } else if (gamepad1.left_trigger > 0.25) {
+                hardware.gate.setPosition(0.4);
+                hardware.in1.setPower(1);
+                hardware.in2.setPower(1);
+            } else if (gamepad1.right_bumper) {
+                hardware.gate.setPosition(0.7);
+                hardware.in1.setPower(-0.8);
+                hardware.in2.setPower(-0.8);
+                hardware.bottom.setVelocity(-1000);
+                hardware.top.setVelocity(-1000);
+            } else {
+                hardware.gate.setPosition(0.7);
+                hardware.in1.setPower(0);
+                hardware.in2.setPower(0);
+            }
+
+            if(gamepad1.right_trigger>0.25){
+                hardware.top.setVelocity(velocity);
+                hardware.bottom.setVelocity(velocity);
+
+            }else{
+                hardware.top.setVelocity(0);
+                hardware.bottom.setVelocity(0);
+            }
+            voltage = hardware.analog_right.getVoltage();
+            telemetry.addData("Turret Voltage", voltage);
+
             telemetry.update();
-
-
-
-
-            prevGamepad1.copy(currentGamepad1);
-            currentGamepad1.copy(gamepad1);
-
-            double x = currentGamepad1.left_stick_x;
-            double y = -currentGamepad1.left_stick_y;
-            double r = 0.8 * currentGamepad1.right_stick_x;
-
-            double speedGain = 2;
-            x = Math.signum(x) * (Math.cosh(Math.abs(x)) - 1);
-            y = Math.signum(y) * (Math.cosh(Math.abs(y)) - 1);
-            x *= speedGain;
-            y *= speedGain;
-            x = Math.max(-1, Math.min(1, x));
-            y = Math.max(-1, Math.min(1, y));
-
-            FL.setPower(y + x + r);
-            FR.setPower(y - x - r);
-            BL.setPower(y - x + r);
-            BR.setPower(y + x - r);
-
-            hood.setPosition(0.4);
-
-
-
-
-
-
-
-
-            if(currentGamepad1.left_bumper){
-                gate.setPosition(0.7);
-                in1.setPower(1);
-                in2.setPower(1);
-            }
-            else if(currentGamepad1.left_trigger>0.25){
-                gate.setPosition(0.4);
-                in1.setPower(1);
-                in2.setPower(1);
-            }else if(currentGamepad1.right_bumper){
-                gate.setPosition(0.7);
-                in1.setPower(-0.8);
-                in2.setPower(-0.8);
-                bottom.setVelocity(-1000);
-                top.setVelocity(-1000);
-
-            }else{
-                gate.setPosition(0.7);
-                in1.setPower(0);
-                in2.setPower(0);
-
-            }
-
-            if(currentGamepad1.right_trigger>0.25){
-                bottom.setVelocity(1700);
-                top.setVelocity(1700);
-            }else{
-                bottom.setVelocity(0);
-                top.setVelocity(0);
-            }
-
-
-            //if()
-
-
-
-
-            //in1.setPower(0);
-            //in2.setPower(0);
-
-
-
-
         }
     }
-
-
 }

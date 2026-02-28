@@ -22,9 +22,9 @@ import org.firstinspires.ftc.teamcode.messages.ThreeDeadWheelInputsMessage;
 @Config
 public final class ThreeDeadWheelLocalizer implements Localizer {
     public static class Params {
-        public double par0YTicks = -1993.66; // 4y position of the first parallel encoder (in tick units)
-        public double par1YTicks = -747.62; //1.5 // y position of the second parallel encoder (in tick units)
-        public double perpXTicks = -3049.07; // 4 x position of the perpendicular encoder (in tick units)
+        public double par0YTicks = 1712.3627934865;//0.16 inches// 4y position of the first parallel encoder (in tick units)
+        public double par1YTicks = -1492.7010940305; //245.127//-747.62;//1.5 // y position of the second parallel encoder (in tick units)
+        public double perpXTicks = -1113.2854313338;//2.99 inches// -3049.07; // 4 x position of the perpendicular encoder (in tick units)
     }
 
     public static Params PARAMS = new Params();
@@ -41,9 +41,9 @@ public final class ThreeDeadWheelLocalizer implements Localizer {
         // TODO: make sure your config has **motors** with these names (or change them)
         //   the encoders should be plugged into the slot matching the named motor
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
-        par0 = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "BL")));
-        par1 = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "FR")));
-        perp = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "FL")));
+        par0 = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "BR")));//3
+        par1 = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "FL"))); //0
+        perp = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "FR"))); //1
 
         // TODO: reverse encoder directions if needed
         //par0.setDirection(DcMotorSimple.Direction.REVERSE);

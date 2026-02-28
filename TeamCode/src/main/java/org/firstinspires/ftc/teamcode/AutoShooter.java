@@ -1,11 +1,17 @@
 package org.firstinspires.ftc.teamcode;
 
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
+
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.IMU;
+
+import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 
 import java.util.List;
 
@@ -16,8 +22,10 @@ public class AutoShooter {
     int alliance =5;
     private static Limelight3A limelight;
 
+    public static IMU imu;
+
     static double limelightMountAngleDegrees  = 18;
-    static double limelightLensHeightInches = 12.1;
+    static double limelightLensHeightInches = 13.5;
     static double goalHeightInches = 29.5;
     static double angleToGoalDegrees;
     static double angleToGoalRadians;
@@ -32,6 +40,16 @@ public class AutoShooter {
         bottom.setDirection(DcMotorEx.Direction.REVERSE);
         top = hardwareMap.get(DcMotorEx.class, "top");
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
+        imu = hardwareMap.get(IMU.class, "imu");
+        // 1. Define the directions based on your mounting
+        RevHubOrientationOnRobot.LogoFacingDirection logo = RevHubOrientationOnRobot.LogoFacingDirection.BACKWARD;
+        RevHubOrientationOnRobot.UsbFacingDirection usb = RevHubOrientationOnRobot.UsbFacingDirection.DOWN;
+
+// 2. Create the orientation object
+        RevHubOrientationOnRobot orientationOnRobot = new RevHubOrientationOnRobot(logo, usb);
+
+// 3. Initialize the IMU with these parameters
+        imu.initialize(new IMU.Parameters(orientationOnRobot));
         limelight.pipelineSwitch(0);
         limelight.start();
     }
@@ -52,6 +70,53 @@ public class AutoShooter {
         return Double.NaN;
     }
 
+    public double getta() {
+
+        LLResult result = limelight.getLatestResult();
+        double lastResult = result.getTa();
+        if (result != null) {
+            if (result.isValid()) {
+                return result.getTa();
+            }
+        }
+        return Double.NaN;
+    }
+
+    public void getxyz(){
+        LLResult result = limelight.getLatestResult();
+        if(result!=null){
+            List<LLResultTypes.FiducialResult> fiducialResults = result.getFiducialResults();
+            for(LLResultTypes.FiducialResult fr:fiducialResults){
+                double x = fr.getRobotPoseFieldSpace().getPosition().x;
+                double y = fr.getRobotPoseFieldSpace().getPosition().y;
+                double z = fr.getRobotPoseFieldSpace().getPosition().z;
+
+                telemetry.addData("x", x);
+                telemetry.addData("y", y);
+                telemetry.addData("z",z);
+                telemetry.update();
+
+            }
+        }
+
+    }
+
+    public void getxy(){
+        // First, tell Limelight which way your robot is facing
+        double robotYaw = imu.getRobotYawPitchRollAngles().getYaw();
+        limelight.updateRobotOrientation(robotYaw);
+        LLResult result = limelight.getLatestResult();
+
+        if (result != null && result.isValid()) {
+            Pose3D botpose_mt2 = result.getBotpose_MT2();
+            if (botpose_mt2 != null) {
+                double x = botpose_mt2.getPosition().x;
+                double y = botpose_mt2.getPosition().y;
+                telemetry.addData("MT2 Location:", "(" + x + ", " + y + ")");
+            }
+        }
+
+    }
     public double getty() {
 
         LLResult result = limelight.getLatestResult();
@@ -62,50 +127,6 @@ public class AutoShooter {
             }
         }
         return Double.NaN;
-    }
-    public double getTxBlue() {
-        LLResult result = limelight.getLatestResult();
-
-        if (result != null && result.isValid()) {
-            // Get all visible AprilTags
-            List<LLResultTypes.FiducialResult> fiducialResults = result.getFiducialResults();
-
-            if (fiducialResults != null) {
-                for (com.qualcomm.hardware.limelightvision.LLResultTypes.FiducialResult fr : fiducialResults) {
-                    int id = fr.getFiducialId();
-
-                    // Example: only care about tag 4 for blue basket
-                    if (id == 4) {
-                        // Return the tx for *this* tag
-                        return result.getTx();
-                    }
-                }
-            }
-        }
-
-        return Double.NaN;  // No blue tag visible
-    }
-    public double getTxRed() {
-        LLResult result = limelight.getLatestResult();
-
-        if (result != null && result.isValid()) {
-            // Get all visible AprilTags
-            List<LLResultTypes.FiducialResult> fiducialResults = result.getFiducialResults();
-
-            if (fiducialResults != null) {
-                for (com.qualcomm.hardware.limelightvision.LLResultTypes.FiducialResult fr : fiducialResults) {
-                    int id = fr.getFiducialId();
-
-                    // Example: only care about tag 4 for blue basket
-                    if (id == 5) {
-                        // Return the tx for *this* tag
-                        return result.getTx();
-                    }
-                }
-            }
-        }
-
-        return Double.NaN;  // No blue tag visible
     }
 
 
@@ -124,7 +145,7 @@ public class AutoShooter {
     public static double getDistanceFromLimelightToGoal(){
         LLResult result =limelight.getLatestResult();
         if(result != null && result.isValid()) {
-            double targetOffsetAngle_Vertical = result.getTy(); // Get 'ty' equivalent
+            double targetOffsetAngle_Vertical = -1*result.getTx(); // Get 'ty' equivalent
             angleToGoalDegrees = limelightMountAngleDegrees + targetOffsetAngle_Vertical;
             angleToGoalRadians = Math.toRadians(angleToGoalDegrees); // More robust than manual conversion
             DistanceFromLimeLighttoGoalInches = (goalHeightInches - limelightLensHeightInches) / Math.tan(angleToGoalRadians);
@@ -137,18 +158,7 @@ public class AutoShooter {
 
 
 
-    public double gettxBlue() {
-        LLResult result = limelight.getLatestResult();
-        if (result != null && result.isValid()) {
-            List<LLResultTypes.FiducialResult> fid = result.getFiducialResults();
-            if (fid != null) {
-                for (LLResultTypes.FiducialResult f : fid) {
-                    if (f.getFiducialId() == 5) return result.getTx();
-                }
-            }
-        }
-        return Double.NaN;
-    }
+
     public double gettxRed() {
         LLResult result = limelight.getLatestResult();
         if (result != null && result.isValid()) {
@@ -161,21 +171,7 @@ public class AutoShooter {
         }
         return Double.NaN;
     }
-    /*public double getTurretPosition() {
-        double value = turret.getCurrentPosition();
-        return value;
-    }*/
 
-    /*public boolean around(){
-        //add buffer
-        if (turret.getCurrentPosition()>405 || turret.getCurrentPosition()<-405){
-            return true;
-        }
-        //insert %180 equivalent ticks) //set range for ticks and find ticks for 180 degree spin
-        //experiment to get around
-
-        return false;
-    }*/
 
 
 
