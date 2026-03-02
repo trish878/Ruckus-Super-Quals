@@ -26,13 +26,16 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
-@TeleOp(name = "VelocityTuner")
+@TeleOp(name = "LiftTest")
 @Config
 public class VelocityTuner extends LinearOpMode {
     DcMotorEx  bottom,top, in1, in2;
 
+    Servo f, two;
+
 
     Servo rightservo, leftservo;
+    CRServo lift1, lift2;
 
     public static double pos_right, pos_left;
     public static double D=10; //+0.1
@@ -41,6 +44,9 @@ public class VelocityTuner extends LinearOpMode {
 
     public static double velocity;
     public static double gate_pos;
+
+    public static double pos;
+
 
 
     public static double I;
@@ -58,7 +64,8 @@ public class VelocityTuner extends LinearOpMode {
 
     double distance;
     ElapsedTime runtime = new ElapsedTime();
-    @Override
+
+
     public void runOpMode() throws InterruptedException {
 
         in1 = hardwareMap.get(DcMotorEx.class, "in1");
@@ -67,6 +74,12 @@ public class VelocityTuner extends LinearOpMode {
         gate= hardwareMap.get(Servo.class, "gate");
         rightservo= hardwareMap.get(Servo.class, "rightservo");
         leftservo= hardwareMap.get(Servo.class, "leftservo");
+
+        lift1 = hardwareMap.get(CRServo.class, "servo");
+        lift2 = hardwareMap.get(CRServo.class, "crservo");
+        f = hardwareMap.get(Servo.class, "f");
+        two = hardwareMap.get(Servo.class, "two");
+
 
         in2.setDirection(DcMotorEx.Direction.REVERSE);
 
@@ -89,6 +102,8 @@ public class VelocityTuner extends LinearOpMode {
 
 
         while (opModeIsActive()) {
+            f.setPosition(pos);
+            two.setPosition(pos);
             rightservo.setPosition(pos_right);
             leftservo.setPosition(pos_left);
 

@@ -145,11 +145,8 @@ public class AutoShooter {
     public static double getDistanceFromLimelightToGoal(){
         LLResult result =limelight.getLatestResult();
         if(result != null && result.isValid()) {
-            double targetOffsetAngle_Vertical = -1*result.getTx(); // Get 'ty' equivalent
-            angleToGoalDegrees = limelightMountAngleDegrees + targetOffsetAngle_Vertical;
-            angleToGoalRadians = Math.toRadians(angleToGoalDegrees); // More robust than manual conversion
-            DistanceFromLimeLighttoGoalInches = (goalHeightInches - limelightLensHeightInches) / Math.tan(angleToGoalRadians);
-            return DistanceFromLimeLighttoGoalInches;
+
+            return result.getBotposeAvgDist();
         } else {
             // No tag found, return -1 or another error value
             return -1;

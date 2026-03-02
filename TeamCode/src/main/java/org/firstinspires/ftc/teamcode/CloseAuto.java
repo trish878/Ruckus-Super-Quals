@@ -1,5 +1,5 @@
-package org.firstinspires.ftc.teamcode.MAIN;
 
+package org.firstinspires.ftc.teamcode;
 import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.FtcDashboard;

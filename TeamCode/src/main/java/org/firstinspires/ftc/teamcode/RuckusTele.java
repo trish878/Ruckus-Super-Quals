@@ -134,6 +134,23 @@ public class RuckusTele extends LinearOpMode {
         imu.resetYaw();
 
         while (opModeIsActive()) {
+
+        }
+
+            //Pose3D botpose = result.getBotpose();
+            /*if (botpose != null) {
+                telemetry.addLine("\n== MegaTag1 botpose (field) ==");
+                telemetry.addData("XYZ (m)", "%.3f, %.3f, %.3f",
+                        botpose.getPosition().x,
+                        botpose.getPosition().y,
+                        botpose.getPosition().z);
+                telemetry.addData("YPR (deg)", "%.1f, %.1f, %.1f",
+                        botpose.getOrientation().getYaw(AngleUnit.DEGREES),
+                        botpose.getOrientation().getPitch(AngleUnit.DEGREES),
+                        botpose.getOrientation().getRoll(AngleUnit.DEGREES));
+                telemetry.addData("Tags Used", result.getBotposeTagCount());
+                telemetry.addData("AvgDist (m)", "%.2f", result.getBotposeAvgDist());*/
+
             //imu.getRobotYawPitchRollAngles();
             /*telemetry.addData("yaw", imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
             telemetry.addData("pitch", imu.getRobotYawPitchRollAngles().getPitch());
@@ -170,6 +187,11 @@ public class RuckusTele extends LinearOpMode {
 
              f.setPower(power);
              two.setPower(power);
+
+             //229*distance+1483=;
+            //0.539-0.233x+0.0447x^2
+
+
 
 
 
@@ -219,13 +241,7 @@ public class RuckusTele extends LinearOpMode {
             BL.setPower(y - x + r);
             BR.setPower(y + x - r);
 
-            hood.setPosition(0.4);
-
-
-
-
-
-
+//            hood.setPosition(0.4);
 
 
             if(currentGamepad1.left_bumper){
@@ -273,6 +289,3 @@ public class RuckusTele extends LinearOpMode {
 
         }
     }
-
-
-}

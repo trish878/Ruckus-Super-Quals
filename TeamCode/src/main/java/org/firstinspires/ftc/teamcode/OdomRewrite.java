@@ -37,11 +37,12 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 
 
 
-@TeleOp(name = "Angle Simple")
+@TeleOp(name = "REAL TELEOP")
 @Config
 public class OdomRewrite extends LinearOpMode {
 
@@ -64,12 +65,14 @@ public class OdomRewrite extends LinearOpMode {
     static final double V_MAX = 3.304;
     static final double FULL_ROT_DEG = 360.0;
     public static double kF=0.012;
+    double lastGoodDistance = Double.NaN;
+    boolean haveLastGoodDistance = false;
 
     public static double kD=0.0008;
 
     double integral =0;
 
-    public static double kP=0.006;
+    public static double kP=-0.006;
     double odomTargetAngle = 0;
 
     double derror=0;
@@ -82,7 +85,7 @@ public class OdomRewrite extends LinearOpMode {
     double scaled_voltage;
 
     public static double hoodpos;
-    public static double velocity;
+    double velocity;
 
     CRServo two, f;
 
@@ -110,6 +113,12 @@ public class OdomRewrite extends LinearOpMode {
 
     DcMotorEx bottom, top;
 
+    public enum Alliance {
+        BLUE, RED
+    }
+
+    public Alliance alliance;
+
 
     //2.76 volts
 // true angle where wrap occurs
@@ -128,6 +137,7 @@ public class OdomRewrite extends LinearOpMode {
     double F = 32767.0 / 2340;
 
     DcMotorEx in1, in2;
+    double distance = 0;
 
 
 
@@ -143,6 +153,8 @@ public class OdomRewrite extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
 
 
+
+
         double voltage = 0;
         double count = 0;
         double cross = 0;
@@ -150,18 +162,17 @@ public class OdomRewrite extends LinearOpMode {
 
         MecanumDrive drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
         //AutoShooter autoShooter = new AutoShooter(hardwareMap);
-        two = hardwareMap.get(CRServo.class, "two");
+
         in1 = hardwareMap.get(DcMotorEx.class, "in1");
         in2 = hardwareMap.get(DcMotorEx.class, "in2");
         in2.setDirection(DcMotorSimple.Direction.REVERSE);
-
+        two = hardwareMap.get(CRServo.class, "two");
         f = hardwareMap.get(CRServo.class, "f");
         hood = hardwareMap.get(Servo.class, "hood");
         //DcMotorEx turret = hardwareMap.get(DcMotorEx.class, "turret");
         analog_right = hardwareMap.get(AnalogInput.class, "servopos");
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
         limelight.setPollRateHz(100); // This sets how often we ask Limelight for data (100 times per second)
-        limelight.start();
         gate = hardwareMap.get(Servo.class, "gate");
 
         limelight.pipelineSwitch(0);
@@ -185,8 +196,6 @@ public class OdomRewrite extends LinearOpMode {
 // 3. Initialize the IMU with these parameters
         imu.initialize(new IMU.Parameters(orientationOnRobot));
 
-        FtcDashboard dashboard = FtcDashboard.getInstance();
-        telemetry = dashboard.getTelemetry();
         double volts = 0;
         Gamepad currentGamepad1 = new Gamepad();
         Gamepad prevGamepad1 = new Gamepad();
@@ -214,16 +223,34 @@ public class OdomRewrite extends LinearOpMode {
         top.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidf);
 
 
+        LLResult result;
+        double tty = 0;
+        boolean foundTag = false;
 
+        telemetry.addData("Select Alliance", "Press LB for BLUE, RB for RED");
+        telemetry.update();
 
+        while (!isStarted() && !isStopRequested()) {
+            if (gamepad1.left_bumper) {
+          alliance = Alliance.BLUE;
+                telemetry.addData("Alliance", "BLUE selected");
+                telemetry.update();
+            } else if (gamepad1.right_bumper) {
+                alliance = Alliance.RED;
+                telemetry.addData("Alliance", "RED selected");
+                telemetry.update();
+            }
+
+        }
 
         waitForStart();
 
         while (opModeIsActive()) {
+
             prevGamepad1.copy(currentGamepad1);
             currentGamepad1.copy(gamepad1);
 
-
+            // ================= DRIVE =================
             double x = currentGamepad1.left_stick_x;
             double y = -currentGamepad1.left_stick_y;
             double r = 0.8 * currentGamepad1.right_stick_x;
@@ -233,33 +260,120 @@ public class OdomRewrite extends LinearOpMode {
             y = Math.signum(y) * (Math.cosh(Math.abs(y)) - 1);
             x *= speedGain;
             y *= speedGain;
-            x = Math.max(-1, Math.min(1, x));
-            y = Math.max(-1, Math.min(1, y));
+            x = clamp(x, -1, 1);
+            y = clamp(y, -1, 1);
 
             FL.setPower(y + x + r);
             FR.setPower(y - x - r);
             BL.setPower(y - x + r);
             BR.setPower(y + x - r);
 
-            hood.setPosition(hoodpos);
+            // ================= LIMELIGHT SAFE READ (KEEP LAST GOOD) =================
 
-            double v = analog_right.getVoltage();
-            double angle = voltageToTurretAngleDeg(v);
 
-            PoseVelocity2d vel = drive.updatePoseEstimate();
-            Pose2d pose = drive.localizer.getPose();
+            result = limelight.getLatestResult();
+            foundTag = false;
 
-            double posx = pose.position.x;
-            double posy = pose.position.y;
+            if (result != null && result.isValid()) {
+                gamepad1.rumble(Gamepad.RUMBLE_DURATION_CONTINUOUS);
+                for (LLResultTypes.FiducialResult tag : result.getFiducialResults()) {
+                    int id = tag.getFiducialId();
 
-            telemetry.addData("x", posx);
-            telemetry.addData("y", posy);
+                    if ((alliance == Alliance.BLUE && id == 20) || (alliance == Alliance.RED  && id == 24)) {
 
-            telemetry.addData("heading", pose.heading);
-            telemetry.addData("topv", top.getVelocity());
-            telemetry.addData("bottomv", bottom.getVelocity());
+                        Pose3D botpose = result.getBotpose();
+                        double dist = result.getBotposeAvgDist();
 
-            if(!wrap){
+                        if (botpose != null && finite(dist)) {
+                            lastGoodDistance = dist;
+                            haveLastGoodDistance = true;
+                        }
+
+                        tty = autoShooter.getty();
+                        foundTag = true;
+                        break; // stop after first matching tag
+                    }
+                }
+            }
+
+            if (!foundTag) {
+                tty=0;
+            }
+
+            // ================= HOOD (SAFE, USE LAST GOOD) =================
+            if (haveLastGoodDistance) {
+                double hoodCmd = 0.539
+                        - 0.233 * lastGoodDistance
+                        + 0.0447 * lastGoodDistance * lastGoodDistance;
+
+                if (finite(hoodCmd)) {
+                    hoodCmd = clamp(hoodCmd, 0.0, 0.5);
+                    hood.setPosition(hoodCmd);
+                }
+            }
+
+                // ================= AUTO SHOOTER POWER (SAFE) =================
+
+
+                if (finite(tty)) {
+                    double pwr = clamp(kP * tty, -1.0, 1.0);
+                    f.setPower(pwr);
+                    two.setPower(pwr);
+                } else {
+                    f.setPower(0);
+                    two.setPower(0);
+                }
+
+
+
+
+
+            // ================= INTAKE + GATE + SHOOTER =================
+            if (gamepad1.left_bumper) {
+                gate.setPosition(0.7);
+                in1.setPower(1);
+                in2.setPower(1);
+
+            } else if (gamepad1.left_trigger > 0.25) {
+                gate.setPosition(0.4);
+                in1.setPower(1);
+                in2.setPower(1);
+
+            } else if (gamepad1.right_bumper) {
+                gate.setPosition(0.7);
+                in1.setPower(-0.8);
+                in2.setPower(-0.8);
+                bottom.setVelocity(-1000);
+                top.setVelocity(-1000);
+
+            } else {
+                gate.setPosition(0.7);
+                in1.setPower(0);
+                in2.setPower(0);
+            }
+
+            // ================= FLYWHEEL VELOCITY (SAFE, USE LAST GOOD) =================
+            if (gamepad1.right_trigger > 0.25 && haveLastGoodDistance) {
+                double velCmd = 282 * lastGoodDistance + 1300;
+                if (finite(velCmd)) {
+                    velocity = velCmd;
+                    top.setVelocity(velocity);
+                    bottom.setVelocity(velocity);
+                }
+            } else {
+                top.setVelocity(0);
+                bottom.setVelocity(0);
+            }
+
+            // ================= TELEMETRY =================
+            telemetry.addData("LL valid", (result != null && result.isValid()));
+            telemetry.addData("haveLastGoodDistance", haveLastGoodDistance);
+            telemetry.addData("lastGoodDistance", lastGoodDistance);
+            telemetry.update();
+        }
+
+
+            /*if(!wrap){
                 double dx = TAG_X - pose.position.x;
                 double dy = TAG_Y - pose.position.y;
                 double angle2 = Math.atan2(dx, dy);
@@ -280,45 +394,8 @@ public class OdomRewrite extends LinearOpMode {
             telemetry.addData("targetAngle", odomTargetAngle);
             derror = error-prev_error;
             double power = kF * vel.angVel + kP*error + kD*derror;
-            power = Math.max(-1, Math.min(1, power));
+            power = Math.max(-1, Math.min(1, power));*/
 
-            f.setPower(power);
-            two.setPower(power);
-            prev_error = error;
-
-            if (gamepad1.left_bumper) {
-                gate.setPosition(0.7);
-                in1.setPower(1);
-                in2.setPower(1);
-            } else if (gamepad1.left_trigger > 0.25) {
-                gate.setPosition(0.4);
-                in1.setPower(1);
-                in2.setPower(1);
-            } else if (gamepad1.right_bumper) {
-                gate.setPosition(0.7);
-                in1.setPower(-0.8);
-                in2.setPower(-0.8);
-                bottom.setVelocity(-1000);
-                top.setVelocity(-1000);
-            } else {
-                gate.setPosition(0.7);
-                in1.setPower(0);
-                in2.setPower(0);
-            }
-
-            if(gamepad1.right_trigger>0.25){
-                top.setVelocity(velocity);
-                bottom.setVelocity(velocity);
-
-            }else{
-                top.setVelocity(0);
-                bottom.setVelocity(0);
-            }
-            telemetry.addData("voltage", v);
-            telemetry.addData("angle", angle);
-            telemetry.update();
-
-        }
     }
 
     public double voltageToTurretAngleDeg(double v) {
@@ -343,6 +420,14 @@ public class OdomRewrite extends LinearOpMode {
 
         prevVoltage = v;
         return turretAngleDeg;
+    }
+
+    private static double clamp(double v, double lo, double hi) {
+        return Math.max(lo, Math.min(hi, v));
+    }
+
+    private static boolean finite(double v) {
+        return Double.isFinite(v);
     }
 
 

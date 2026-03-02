@@ -105,6 +105,18 @@ public class AprilTagLocalization extends LinearOpMode {
         }
 
         // ===== Optional: MegaTag2 (requires yaw fed from IMU) =====
+        //see whats field centric vs distance from center
+        //check if projy and projx detect the right x and y position from the center of limelight
+        //if they do translate to roadrunner using constant apriltag position x and y and new pose 2d reset
+        // set red and blue goals for apriltag position
+        //drive train using localization practice
+        //redo odometry with new localization technique //set red and blue goals
+        //retune turret odom PID
+        //test when odom is out of tune with target/ OR WHEN ITS ANGLE READS WRONG
+        //see if you can calculate distance traveled after apriltag localization to get new distance
+        //MAJOR ASSUMPTION ASSUME TURRET IS FACING APRILTAG AND ODOM TRACKING IS RIGHT TO RELOCALIZE DISTANCE
+        //WE CAN SHOOT WITHOUT TRACKING BUT WITH ONLY VERY MINIMAL SLOW ROTATIONAL MOVEMENT
+        //button to lock or at 0 or something
         if (imu != null) {
             // NOTE: You may need to adjust which yaw you use depending on your IMU orientation.
             double yawDeg = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
