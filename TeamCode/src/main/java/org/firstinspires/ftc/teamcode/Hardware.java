@@ -11,25 +11,28 @@ import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.robotcontroller.external.samples.SensorGoBildaPinpoint;
+
 public class Hardware {
 
     // ================= INTAKE =================
-    DcMotorEx in1, in2;
+    public static DcMotorEx in1, in2;
 
     // ================= DRIVETRAIN =================
 
-    DcMotorEx FL, FR, BL, BR;
+    public static DcMotorEx FL, FR, BL, BR;
     // ================= FLYWHEEL =================
-    DcMotorEx bottom, top;
+    public static DcMotorEx bottom, top;
+
 
     // ================= TURRET =================
 
 
-    CRServo f, two;
+    public static CRServo leftTurret, rightTurret; //right isn't working
 
     // ================= HOOD+GATE =================
 
-    Servo hood, gate;
+    public static Servo hood, gate;
 
     // ================= TURRET ENCODER =================
 
@@ -44,6 +47,8 @@ public class Hardware {
 
     Servo hoodLight;
 
+    // ================= PINPOINT =================
+    public static SensorGoBildaPinpoint pinpoint;
     // ================= VELOCITY PIDF VALUES =================
 
 
@@ -69,22 +74,20 @@ public class Hardware {
         BR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         in1 = hardwareMap.get(DcMotorEx.class, "in1");
-
         in2 = hardwareMap.get(DcMotorEx.class, "in2");
-        in2.setDirection(DcMotorSimple.Direction.REVERSE);
 
 
         bottom = hardwareMap.get(DcMotorEx.class, "bottom");
         bottom.setDirection(DcMotorSimple.Direction.REVERSE);
         top = hardwareMap.get(DcMotorEx.class, "top");
-
+        top.setDirection(DcMotorSimple.Direction.REVERSE);
         PIDFCoefficients pidf = new PIDFCoefficients(P, I, D, F);
 
         bottom.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidf);
         top.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidf);
 
-        f = hardwareMap.get(CRServo.class, "f");
-        two = hardwareMap.get(CRServo.class, "two");
+        leftTurret = hardwareMap.get(CRServo.class, "leftTurret");
+        rightTurret = hardwareMap.get(CRServo.class, "rightTurret");
 
         gate = hardwareMap.get(Servo.class, "gate");
         hood = hardwareMap.get(Servo.class, "hood");

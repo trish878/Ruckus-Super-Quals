@@ -87,7 +87,7 @@ public class OdomRewrite extends LinearOpMode {
     public static double hoodpos;
     double velocity;
 
-    CRServo two, f;
+    CRServo leftTurret, rightTurret;
 
 
 
@@ -166,8 +166,8 @@ public class OdomRewrite extends LinearOpMode {
         in1 = hardwareMap.get(DcMotorEx.class, "in1");
         in2 = hardwareMap.get(DcMotorEx.class, "in2");
         in2.setDirection(DcMotorSimple.Direction.REVERSE);
-        two = hardwareMap.get(CRServo.class, "two");
-        f = hardwareMap.get(CRServo.class, "f");
+        leftTurret = hardwareMap.get(CRServo.class, "leftTurret");
+        rightTurret = hardwareMap.get(CRServo.class, "rightTurret");
         hood = hardwareMap.get(Servo.class, "hood");
         //DcMotorEx turret = hardwareMap.get(DcMotorEx.class, "turret");
         analog_right = hardwareMap.get(AnalogInput.class, "servopos");
@@ -308,7 +308,7 @@ public class OdomRewrite extends LinearOpMode {
 
                 if (finite(hoodCmd)) {
                     hoodCmd = clamp(hoodCmd, 0.0, 0.5);
-                    hood.setPosition(hoodCmd);
+                    hood.setPosition(0.4);
                 }
             }
 
@@ -317,11 +317,11 @@ public class OdomRewrite extends LinearOpMode {
 
                 if (finite(tty)) {
                     double pwr = clamp(kP * tty, -1.0, 1.0);
-                    f.setPower(pwr);
-                    two.setPower(pwr);
+                    leftTurret.setPower(pwr);
+                    rightTurret.setPower(pwr);
                 } else {
-                    f.setPower(0);
-                    two.setPower(0);
+                    leftTurret.setPower(0);
+                    rightTurret.setPower(0);
                 }
 
 
@@ -330,24 +330,24 @@ public class OdomRewrite extends LinearOpMode {
 
             // ================= INTAKE + GATE + SHOOTER =================
             if (gamepad1.left_bumper) {
-                gate.setPosition(0.7);
+                gate.setPosition(0.3);
                 in1.setPower(1);
                 in2.setPower(1);
 
             } else if (gamepad1.left_trigger > 0.25) {
-                gate.setPosition(0.4);
+                gate.setPosition(0);
                 in1.setPower(1);
                 in2.setPower(1);
 
             } else if (gamepad1.right_bumper) {
-                gate.setPosition(0.7);
+                gate.setPosition(0.3);
                 in1.setPower(-0.8);
                 in2.setPower(-0.8);
                 bottom.setVelocity(-1000);
                 top.setVelocity(-1000);
 
             } else {
-                gate.setPosition(0.7);
+                gate.setPosition(0.3);
                 in1.setPower(0);
                 in2.setPower(0);
             }

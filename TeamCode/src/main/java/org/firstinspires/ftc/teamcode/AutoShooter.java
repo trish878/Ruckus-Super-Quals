@@ -34,8 +34,8 @@ public class AutoShooter {
 
     public AutoShooter(HardwareMap hardwareMap) {
         this.hardwareMap = hardwareMap;
-        f = hardwareMap.get(CRServo.class, "f");
-        two = hardwareMap.get(CRServo.class, "two");
+        f = hardwareMap.get(CRServo.class, "leftTurret");
+        two = hardwareMap.get(CRServo.class, "rightTurret");
         bottom = hardwareMap.get(DcMotorEx.class, "bottom");
         bottom.setDirection(DcMotorEx.Direction.REVERSE);
         top = hardwareMap.get(DcMotorEx.class, "top");
